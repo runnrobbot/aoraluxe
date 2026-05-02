@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+# Block admin page from indexing
+Disallow: /admin
+
+Sitemap: https://aoraluxe.com/sitemap.xml
