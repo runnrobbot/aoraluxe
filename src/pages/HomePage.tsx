@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useRef, useMemo } from 'react';
+import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import Navbar from '../components/Navbar';
 import HeroSection from '../components/HeroSection';
 import CategoryFilter from '../components/CategoryFilter';
@@ -8,46 +8,54 @@ import ProductModal from '../components/ProductModal';
 import Footer from '../components/Footer';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useProducts } from '../hooks/useProducts';
+import { CATEGORIES } from '../constants/categories';
+import type { CategoryWithAll } from '../constants/categories';
+import type { Product } from '../types/product';
 
-const sectionVariants = {
+const EASE_OUT = [0.16, 1, 0.3, 1] as [number, number, number, number];
+
+const sectionVariants: Variants = {
   hidden: { opacity: 0, y: 40 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] } },
+  show: { opacity: 1, y: 0, transition: { duration: 0.7, ease: EASE_OUT } },
 };
 
-const gridVariants = {
+const gridVariants: Variants = {
   hidden: {},
   show: { transition: { staggerChildren: 0.07 } },
 };
 
-const cardVariants = {
+const cardVariants: Variants = {
   hidden: { opacity: 0, y: 24 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
+  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' as const } },
 };
 
 const HomePage = () => {
   const { products, loading, error } = useProducts();
-  const [category, setCategory] = useState('Semua');
+  const [category, setCategory] = useState<CategoryWithAll>('Semua');
   const [search, setSearch] = useState('');
-  const [activeProduct, setActiveProduct] = useState(null);
-  const collectionRef = useRef(null);
+  const [activeProduct, setActiveProduct] = useState<Product | null>(null);
+  const collectionRef = useRef<HTMLDivElement>(null);
 
   const handleExplore = () => {
     collectionRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const featured = products.filter((p) => p.featured);
+  const featured = useMemo(() => products.filter((p) => p.featured), [products]);
 
-  const filtered = products.filter((p) => {
-    const matchCat = category === 'Semua' || p.category === category;
-    const matchSearch = !search || p.name?.toLowerCase().includes(search.toLowerCase()) || p.description?.toLowerCase().includes(search.toLowerCase());
-    return matchCat && matchSearch;
-  });
+  const filtered = useMemo(() => {
+    return products.filter((p) => {
+      const matchCat = category === 'Semua' || (p.category ?? '').toLowerCase() === category.toLowerCase();
+      const matchSearch = !search ||
+        p.name?.toLowerCase().includes(search.toLowerCase()) ||
+        p.description?.toLowerCase().includes(search.toLowerCase());
+      return matchCat && matchSearch;
+    });
+  }, [products, category, search]);
 
   return (
     <div className="min-h-screen bg-white font-sans">
       <Navbar onSearch={setSearch} />
 
-      {/* Hero */}
       <HeroSection onExplore={handleExplore} />
 
       {/* Featured Products */}
@@ -97,7 +105,6 @@ const HomePage = () => {
         className="py-20 px-4"
       >
         <div className="max-w-7xl mx-auto">
-          {/* Header row */}
           <div className="flex flex-col gap-6 mb-10">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
               <div>
@@ -109,7 +116,7 @@ const HomePage = () => {
                 </h2>
               </div>
 
-              {/* Search bar (desktop — inline in section) */}
+              {/* Search bar (desktop) */}
               <div className="hidden md:flex items-center gap-3">
                 <div className="relative">
                   <input
@@ -124,31 +131,25 @@ const HomePage = () => {
                   </svg>
                 </div>
                 {search && (
-                  <button onClick={() => setSearch('')} className="text-xs text-zinc-400 hover:text-zinc-700 tracking-wider transition-colors">
+                  <button onClick={() => setSearch('')}
+                    className="text-xs text-zinc-400 hover:text-zinc-700 tracking-wider transition-colors">
                     Reset
                   </button>
                 )}
               </div>
             </div>
 
-            {/* Category filter */}
-            <CategoryFilter selected={category} onSelect={(c) => { setCategory(c); }} />
+            <CategoryFilter selected={category} onSelect={(c) => setCategory(c as CategoryWithAll)} />
           </div>
 
           {loading ? (
-            <div className="py-24 flex justify-center">
-              <LoadingSpinner size="lg" />
-            </div>
+            <div className="py-24 flex justify-center"><LoadingSpinner size="lg" /></div>
           ) : error ? (
             <div className="py-24 text-center">
               <p className="text-red-400 text-sm">Gagal memuat produk. Periksa koneksi Anda.</p>
             </div>
           ) : filtered.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="py-24 text-center"
-            >
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-24 text-center">
               <svg className="w-12 h-12 text-zinc-200 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
               </svg>
@@ -159,8 +160,7 @@ const HomePage = () => {
                 <button
                   onClick={() => { setSearch(''); setCategory('Semua'); }}
                   className="mt-4 text-xs tracking-widest uppercase hover:underline"
-                  style={{ color: '#c9a84c' }}
-                >
+                  style={{ color: '#c9a84c' }}>
                   Tampilkan semua →
                 </button>
               )}

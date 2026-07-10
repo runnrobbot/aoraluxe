@@ -1,8 +1,13 @@
 import { motion } from 'framer-motion';
+import { CATEGORIES } from '../constants/categories';
+import type { CategoryWithAll } from '../constants/categories';
 
-const CATEGORIES = ['Semua', 'Sale', 'Premium', 'Semi Mirror', 'Mirror', 'No Brand'];
+interface CategoryFilterProps {
+  selected: CategoryWithAll;
+  onSelect: (cat: CategoryWithAll) => void;
+}
 
-const CategoryFilter = ({ selected, onSelect }) => (
+const CategoryFilter = ({ selected, onSelect }: CategoryFilterProps) => (
   <div className="flex items-center gap-2 flex-wrap">
     {CATEGORIES.map((cat) => (
       <motion.button

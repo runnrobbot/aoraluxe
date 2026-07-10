@@ -1,9 +1,15 @@
 import { motion } from 'framer-motion';
 import { getOptimizedUrl } from '../utils/cloudinary';
+import type { Product } from '../types/product';
 
-const ProductCard = ({ product, onClick }) => {
-  const { name, category, price, imageUrl, publicId, description, stock } = product;
-  const imgSrc = publicId ? getOptimizedUrl(publicId, { width: 500 }) : imageUrl;
+interface ProductCardProps {
+  product: Product;
+  onClick: () => void;
+}
+
+const ProductCard = ({ product, onClick }: ProductCardProps) => {
+  const { name, category, price, publicId, description, stock } = product;
+  const imgSrc = publicId ? getOptimizedUrl(publicId, { width: 500 }) : product.imageUrl;
 
   return (
     <motion.article

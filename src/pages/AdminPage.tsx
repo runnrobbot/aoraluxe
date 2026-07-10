@@ -8,8 +8,11 @@ import ProductForm from '../components/ProductForm';
 import ConfirmDialog from '../components/ConfirmDialog';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { getOptimizedUrl } from '../utils/cloudinary';
+import { CATEGORIES } from '../constants/categories';
+import type { CategoryWithAll } from '../constants/categories';
+import type { Product } from '../types/product';
+import type { ProductInput } from '../schemas/product';
 
-const CATEGORIES = ['Semua', 'Sale', 'Premium', 'Semi Mirror', 'Mirror', 'No Brand'];
 const SORT_OPTIONS = [
   { value: 'newest', label: 'Terbaru' },
   { value: 'oldest', label: 'Terlama' },
@@ -17,10 +20,18 @@ const SORT_OPTIONS = [
   { value: 'name_desc', label: 'Nama Z–A' },
   { value: 'price_asc', label: 'Harga Terendah' },
   { value: 'price_desc', label: 'Harga Tertinggi' },
-];
+] as const;
+
+type SortValue = typeof SORT_OPTIONS[number]['value'];
 
 /* ── Modal wrapper ────────────────────────────────────────────── */
-const Modal = ({ title, onClose, children }) => (
+interface ModalProps {
+  title: string;
+  onClose: () => void;
+  children: React.ReactNode;
+}
+
+const Modal = ({ title, onClose, children }: ModalProps) => (
   <motion.div
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
@@ -33,7 +44,7 @@ const Modal = ({ title, onClose, children }) => (
       initial={{ opacity: 0, scale: 0.97, y: 16 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.97, y: 16 }}
-      transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
       className="relative z-10 bg-white w-full max-w-lg p-4 sm:p-6 shadow-2xl max-h-[92vh] overflow-y-auto"
       onClick={(e) => e.stopPropagation()}
     >
@@ -51,14 +62,15 @@ const Modal = ({ title, onClose, children }) => (
 );
 
 /* ── Image Preview Tooltip ────────────────────────────────────── */
-const ThumbPreview = ({ src, alt }) => {
+interface ThumbPreviewProps {
+  src: string;
+  alt: string;
+}
+
+const ThumbPreview = ({ src, alt }: ThumbPreviewProps) => {
   const [hovered, setHovered] = useState(false);
   return (
-    <div
-      className="relative w-10 h-10 flex-shrink-0"
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
+    <div className="relative w-10 h-10 flex-shrink-0" onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
       {src ? (
         <img src={src} alt={alt} className="w-full h-full object-cover bg-zinc-100" />
       ) : (
@@ -83,12 +95,15 @@ const ThumbPreview = ({ src, alt }) => {
 };
 
 /* ── Stat card ────────────────────────────────────────────────── */
-const StatCard = ({ label, value, accent }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 16 }}
-    animate={{ opacity: 1, y: 0 }}
-    className="bg-white p-3 sm:p-5 border border-zinc-100"
-  >
+interface StatCardProps {
+  label: string;
+  value: number;
+  accent?: string;
+}
+
+const StatCard = ({ label, value, accent }: StatCardProps) => (
+  <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+    className="bg-white p-3 sm:p-5 border border-zinc-100">
     <p className="text-xl sm:text-2xl font-bold mb-1" style={{ color: accent || '#18181b' }}>{value}</p>
     <p className="text-[0.55rem] sm:text-[0.6rem] tracking-widest uppercase text-zinc-400">{label}</p>
   </motion.div>
@@ -100,16 +115,24 @@ const AdminPage = () => {
   const navigate = useNavigate();
 
   const [showAdd, setShowAdd] = useState(false);
-  const [editTarget, setEditTarget] = useState(null);
-  const [deleteId, setDeleteId] = useState(null);
+  const [editTarget, setEditTarget] = useState<Product | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [search, setSearch] = useState('');
-  const [catFilter, setCatFilter] = useState('Semua');
-  const [sortBy, setSortBy] = useState('newest');
-  const [togglingId, setTogglingId] = useState(null);
+  const [catFilter, setCatFilter] = useState<CategoryWithAll>('Semua');
+  const [sortBy, setSortBy] = useState<SortValue>('newest');
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
-  const handleAdd = async (data) => { await addProduct(data); setShowAdd(false); };
-  const handleEdit = async (data) => { await updateProduct(editTarget.id, data); setEditTarget(null); };
+  const handleAdd = async (data: Record<string, unknown>) => {
+    await addProduct(data as unknown as ProductInput);
+    setShowAdd(false);
+  };
+
+  const handleEdit = async (data: Record<string, unknown>) => {
+    await updateProduct(editTarget!.id, data as unknown as Partial<ProductInput>);
+    setEditTarget(null);
+  };
+
   const handleDelete = async () => {
     if (!deleteId) return;
     setDeleting(true);
@@ -117,7 +140,7 @@ const AdminPage = () => {
     finally { setDeleting(false); setDeleteId(null); }
   };
 
-  const handleToggleFeatured = async (p) => {
+  const handleToggleFeatured = async (p: Product) => {
     setTogglingId(p.id);
     try { await updateProduct(p.id, { featured: !p.featured }); }
     finally { setTogglingId(null); }
@@ -128,7 +151,7 @@ const AdminPage = () => {
   const filtered = useMemo(() => {
     let list = [...products];
     if (search) list = list.filter((p) => p.name?.toLowerCase().includes(search.toLowerCase()));
-    if (catFilter !== 'Semua') list = list.filter((p) => p.category === catFilter);
+    if (catFilter !== 'Semua') list = list.filter((p) => (p.category ?? '').toLowerCase() === catFilter.toLowerCase());
     switch (sortBy) {
       case 'oldest': list.sort((a, b) => (a.createdAt?.seconds ?? 0) - (b.createdAt?.seconds ?? 0)); break;
       case 'name_asc': list.sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '')); break;
@@ -163,10 +186,8 @@ const AdminPage = () => {
             <Link to="/" className="text-[0.65rem] sm:text-xs tracking-widest uppercase text-zinc-400 hover:text-zinc-700 transition-colors whitespace-nowrap">
               Toko
             </Link>
-            <button
-              onClick={handleLogout}
-              className="text-[0.65rem] sm:text-xs tracking-widest uppercase text-zinc-400 hover:text-red-400 transition-colors"
-            >
+            <button onClick={handleLogout}
+              className="text-[0.65rem] sm:text-xs tracking-widest uppercase text-zinc-400 hover:text-red-400 transition-colors">
               Keluar
             </button>
           </div>
@@ -177,12 +198,8 @@ const AdminPage = () => {
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
           {stats.map((s, i) => (
-            <motion.div
-              key={s.label}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.06 }}
-            >
+            <motion.div key={s.label} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.06 }}>
               <StatCard {...s} />
             </motion.div>
           ))}
@@ -192,25 +209,18 @@ const AdminPage = () => {
         <div className="flex flex-col gap-3 sm:gap-4 mb-5">
           <div className="flex items-center justify-between gap-3">
             <h1 className="font-serif text-xl sm:text-2xl text-zinc-900">Manajemen Produk</h1>
-            <button
-              onClick={() => setShowAdd(true)}
-              className="flex-shrink-0 px-4 sm:px-5 py-2 bg-zinc-900 text-white text-[0.65rem] sm:text-xs tracking-widest uppercase hover:bg-gold hover:text-zinc-900 transition-all whitespace-nowrap"
-            >
+            <button onClick={() => setShowAdd(true)}
+              className="flex-shrink-0 px-4 sm:px-5 py-2 bg-zinc-900 text-white text-[0.65rem] sm:text-xs tracking-widest uppercase hover:bg-gold hover:text-zinc-900 transition-all whitespace-nowrap">
               + Tambah
             </button>
           </div>
 
           {/* Filters row */}
           <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-3">
-            {/* Search */}
             <div className="relative flex-1 sm:min-w-[160px] sm:max-w-xs">
-              <input
-                type="text"
-                placeholder="Cari produk..."
-                value={search}
+              <input type="text" placeholder="Cari produk..." value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-3 pr-8 py-2.5 sm:py-2 border border-zinc-200 text-sm focus:outline-none focus:border-gold transition-colors"
-              />
+                className="w-full pl-3 pr-8 py-2.5 sm:py-2 border border-zinc-200 text-sm focus:outline-none focus:border-gold transition-colors" />
               {search && (
                 <button onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-300 hover:text-zinc-600">
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -221,26 +231,16 @@ const AdminPage = () => {
             </div>
 
             <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 sm:gap-3">
-              {/* Category filter */}
-              <select
-                value={catFilter}
-                onChange={(e) => setCatFilter(e.target.value)}
-                className="px-3 py-2.5 sm:py-2 border border-zinc-200 text-sm text-zinc-600 focus:outline-none focus:border-gold transition-colors bg-white"
-              >
+              <select value={catFilter} onChange={(e) => setCatFilter(e.target.value as CategoryWithAll)}
+                className="px-3 py-2.5 sm:py-2 border border-zinc-200 text-sm text-zinc-600 focus:outline-none focus:border-gold transition-colors bg-white">
                 {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
-
-              {/* Sort */}
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="px-3 py-2.5 sm:py-2 border border-zinc-200 text-sm text-zinc-600 focus:outline-none focus:border-gold transition-colors bg-white"
-              >
+              <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortValue)}
+                className="px-3 py-2.5 sm:py-2 border border-zinc-200 text-sm text-zinc-600 focus:outline-none focus:border-gold transition-colors bg-white">
                 {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </div>
 
-            {/* Result count */}
             <span className="text-xs text-zinc-400 tracking-wider self-center">
               {filtered.length} produk{filtered.length !== products.length ? ` dari ${products.length}` : ''}
             </span>
@@ -306,37 +306,27 @@ const AdminPage = () => {
                             </span>
                           </td>
                           <td className="px-4 py-3">
-                            {/* Inline featured toggle */}
-                            <button
-                              onClick={() => handleToggleFeatured(p)}
-                              disabled={togglingId === p.id}
-                              className="transition-all"
-                              title={p.featured ? 'Unfeature' : 'Set sebagai unggulan'}
-                            >
+                            <button onClick={() => handleToggleFeatured(p)} disabled={togglingId === p.id}
+                              className="transition-all" title={p.featured ? 'Unfeature' : 'Set sebagai unggulan'}>
                               {togglingId === p.id ? (
                                 <span className="w-5 h-5 inline-block border-2 border-gold border-t-transparent rounded-full animate-spin" />
                               ) : (
-                                <svg
-                                  className={`w-5 h-5 transition-colors ${p.featured ? 'text-gold fill-gold' : 'text-zinc-200 hover:text-gold/50'}`}
-                                  viewBox="0 0 24 24" fill={p.featured ? 'currentColor' : 'none'} stroke="currentColor"
-                                >
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                                <svg className={`w-5 h-5 transition-colors ${p.featured ? 'text-gold fill-gold' : 'text-zinc-200 hover:text-gold/50'}`}
+                                  viewBox="0 0 24 24" fill={p.featured ? 'currentColor' : 'none'} stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                                    d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
                                 </svg>
                               )}
                             </button>
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-2">
-                              <button
-                                onClick={() => setEditTarget(p)}
-                                className="text-xs tracking-wider text-zinc-500 hover:text-zinc-900 border border-zinc-200 hover:border-zinc-400 px-3 py-1 transition-all"
-                              >
+                              <button onClick={() => setEditTarget(p)}
+                                className="text-xs tracking-wider text-zinc-500 hover:text-zinc-900 border border-zinc-200 hover:border-zinc-400 px-3 py-1 transition-all">
                                 Edit
                               </button>
-                              <button
-                                onClick={() => setDeleteId(p.id)}
-                                className="text-xs tracking-wider text-red-400 hover:text-red-600 border border-red-100 hover:border-red-300 px-3 py-1 transition-all"
-                              >
+                              <button onClick={() => setDeleteId(p.id)}
+                                className="text-xs tracking-wider text-red-400 hover:text-red-600 border border-red-100 hover:border-red-300 px-3 py-1 transition-all">
                                 Hapus
                               </button>
                             </div>
@@ -356,20 +346,14 @@ const AdminPage = () => {
                 return (
                   <div key={p.id} className="p-3 sm:p-4">
                     <div className="flex gap-3 items-start mb-3">
-                      {/* Thumbnail */}
                       <div className="w-16 h-16 bg-zinc-100 overflow-hidden flex-shrink-0">
                         {thumb ? <img src={thumb} alt={p.name} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-zinc-200" />}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-1">
                           <h3 className="text-sm font-medium text-zinc-800 leading-snug line-clamp-2 flex-1">{p.name}</h3>
-                          {/* Featured star — 36×36 touch target */}
-                          <button
-                            onClick={() => handleToggleFeatured(p)}
-                            disabled={togglingId === p.id}
-                            className="w-9 h-9 flex items-center justify-center flex-shrink-0 -mt-0.5 -mr-1"
-                            title={p.featured ? 'Unfeature' : 'Set unggulan'}
-                          >
+                          <button onClick={() => handleToggleFeatured(p)} disabled={togglingId === p.id}
+                            className="w-9 h-9 flex items-center justify-center flex-shrink-0 -mt-0.5 -mr-1" title={p.featured ? 'Unfeature' : 'Set unggulan'}>
                             {togglingId === p.id ? (
                               <span className="w-4 h-4 border-2 border-gold border-t-transparent rounded-full animate-spin inline-block" />
                             ) : (
@@ -387,16 +371,12 @@ const AdminPage = () => {
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <button
-                        onClick={() => setEditTarget(p)}
-                        className="flex-1 py-2.5 text-xs tracking-wider border border-zinc-200 text-zinc-600 hover:border-zinc-400 active:bg-zinc-50 transition-all"
-                      >
+                      <button onClick={() => setEditTarget(p)}
+                        className="flex-1 py-2.5 text-xs tracking-wider border border-zinc-200 text-zinc-600 hover:border-zinc-400 active:bg-zinc-50 transition-all">
                         Edit
                       </button>
-                      <button
-                        onClick={() => setDeleteId(p.id)}
-                        className="flex-1 py-2.5 text-xs tracking-wider border border-red-100 text-red-400 hover:border-red-300 active:bg-red-50 transition-all"
-                      >
+                      <button onClick={() => setDeleteId(p.id)}
+                        className="flex-1 py-2.5 text-xs tracking-wider border border-red-100 text-red-400 hover:border-red-300 active:bg-red-50 transition-all">
                         Hapus
                       </button>
                     </div>

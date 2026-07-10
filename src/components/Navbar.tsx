@@ -6,12 +6,16 @@ import { auth } from '../firebase/config';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 
-const Navbar = ({ onSearch }) => {
+interface NavbarProps {
+  onSearch?: (query: string) => void;
+}
+
+const Navbar = ({ onSearch }: NavbarProps) => {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const searchInputRef = useRef(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
   const { totalItems, setDrawerOpen } = useCart();
   const navigate = useNavigate();
@@ -30,14 +34,14 @@ const Navbar = ({ onSearch }) => {
       setSearchQuery('');
       onSearch?.('');
     }
-  }, [searchOpen]);
+  }, [searchOpen, onSearch]);
 
   const handleLogout = async () => {
     await signOut(auth);
     navigate('/');
   };
 
-  const handleSearchChange = (e) => {
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
     onSearch?.(e.target.value);
     if (e.target.value && isHome) {
@@ -133,20 +137,16 @@ const Navbar = ({ onSearch }) => {
 
             {/* Logout (admin only) */}
             {user && (
-              <button
-                onClick={handleLogout}
-                className={`hidden md:block text-[0.7rem] tracking-[0.2em] uppercase font-medium transition-colors hover:text-red-400 ${dark ? 'text-zinc-400' : 'text-white/60'}`}
-              >
+              <button onClick={handleLogout}
+                className={`hidden md:block text-[0.7rem] tracking-[0.2em] uppercase font-medium transition-colors hover:text-red-400 ${dark ? 'text-zinc-400' : 'text-white/60'}`}>
                 Keluar
               </button>
             )}
 
             {/* Mobile hamburger */}
-            <button
-              onClick={() => setMenuOpen((v) => !v)}
+            <button onClick={() => setMenuOpen((v) => !v)}
               className={`md:hidden p-1 transition-colors ${dark ? 'text-zinc-700' : 'text-white'}`}
-              aria-label="Toggle menu"
-            >
+              aria-label="Toggle menu">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 {menuOpen
                   ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -167,15 +167,10 @@ const Navbar = ({ onSearch }) => {
               className="md:hidden overflow-hidden bg-white border-t border-zinc-100"
             >
               <div className="py-4 px-2 space-y-3">
-                {/* Mobile search */}
                 <div className="relative">
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={handleSearchChange}
+                  <input type="text" value={searchQuery} onChange={handleSearchChange}
                     placeholder="Cari produk..."
-                    className="w-full px-3 py-2 text-xs border border-zinc-200 outline-none focus:border-gold text-zinc-700 placeholder-zinc-400 transition-colors"
-                  />
+                    className="w-full px-3 py-2 text-xs border border-zinc-200 outline-none focus:border-gold text-zinc-700 placeholder-zinc-400 transition-colors" />
                   <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
                   </svg>
@@ -185,7 +180,8 @@ const Navbar = ({ onSearch }) => {
                 {user && (
                   <>
                     <Link to="/admin" onClick={closeSearch} className="block text-xs tracking-widest uppercase text-zinc-600 hover:text-gold py-1">Panel Admin</Link>
-                    <button onClick={() => { handleLogout(); closeSearch(); }} className="block w-full text-left text-xs tracking-widest uppercase text-red-400 hover:text-red-600 py-1">
+                    <button onClick={() => { handleLogout(); closeSearch(); }}
+                      className="block w-full text-left text-xs tracking-widest uppercase text-red-400 hover:text-red-600 py-1">
                       Keluar
                     </button>
                   </>

@@ -1,11 +1,17 @@
+export interface CloudinaryResult {
+  url: string;
+  publicId: string;
+}
+
+export interface OptimizedUrlOptions {
+  width?: number;
+  quality?: string;
+}
+
 const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
 const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
-/**
- * Upload file gambar ke Cloudinary menggunakan unsigned upload.
- * Pastikan UPLOAD_PRESET sudah diset ke "Unsigned" di dashboard Cloudinary.
- */
-export const uploadImage = async (file) => {
+export const uploadImage = async (file: File): Promise<CloudinaryResult> => {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('upload_preset', UPLOAD_PRESET);
@@ -17,21 +23,18 @@ export const uploadImage = async (file) => {
   );
 
   if (!res.ok) {
-    const errData = await res.json();
+    const errData = (await res.json()) as { error?: { message?: string } };
     throw new Error(errData.error?.message || 'Upload gambar gagal');
   }
 
-  const data = await res.json();
-  return {
-    url: data.secure_url,
-    publicId: data.public_id,
-  };
+  const data = await res.json() as { secure_url: string; public_id: string };
+  return { url: data.secure_url, publicId: data.public_id };
 };
 
-/**
- * Dapatkan URL gambar yang sudah dioptimasi dari Cloudinary.
- */
-export const getOptimizedUrl = (publicId, { width = 600, quality = 'auto' } = {}) => {
+export const getOptimizedUrl = (
+  publicId: string,
+  { width = 600, quality = 'auto' }: OptimizedUrlOptions = {}
+): string => {
   if (!publicId) return '';
   return `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/w_${width},q_${quality},f_auto,c_fill/${publicId}`;
 };

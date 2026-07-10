@@ -1,11 +1,18 @@
-const ConfirmDialog = ({ message, onConfirm, onCancel, loading = false }) => (
+interface ConfirmDialogProps {
+  message: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+  loading?: boolean;
+}
+
+const ConfirmDialog = ({ message, onConfirm, onCancel, loading = false }: ConfirmDialogProps) => (
   <div
-    className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in"
+    className="fixed inset-0 z-50 flex items-center justify-center p-4"
     onClick={!loading ? onCancel : undefined}
   >
     <div className="absolute inset-0 bg-zinc-950/60 backdrop-blur-sm" />
     <div
-      className="relative z-10 bg-white max-w-sm w-full p-7 shadow-2xl animate-slide-up"
+      className="relative z-10 bg-white max-w-sm w-full p-7 shadow-2xl"
       onClick={(e) => e.stopPropagation()}
     >
       <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-5">
@@ -15,18 +22,12 @@ const ConfirmDialog = ({ message, onConfirm, onCancel, loading = false }) => (
       </div>
       <p className="text-center text-sm text-zinc-600 mb-7 leading-relaxed">{message}</p>
       <div className="flex gap-3">
-        <button
-          onClick={onConfirm}
-          disabled={loading}
-          className="flex-1 py-2.5 bg-red-500 text-white text-xs tracking-widest uppercase hover:bg-red-600 transition-colors disabled:opacity-50"
-        >
+        <button onClick={onConfirm} disabled={loading}
+          className="flex-1 py-2.5 bg-red-500 text-white text-xs tracking-widest uppercase hover:bg-red-600 transition-colors disabled:opacity-50">
           {loading ? 'Menghapus...' : 'Ya, Hapus'}
         </button>
-        <button
-          onClick={onCancel}
-          disabled={loading}
-          className="flex-1 py-2.5 border border-zinc-200 text-zinc-600 text-xs tracking-widest uppercase hover:border-zinc-400 transition-colors disabled:opacity-50"
-        >
+        <button onClick={onCancel} disabled={loading}
+          className="flex-1 py-2.5 border border-zinc-200 text-zinc-600 text-xs tracking-widest uppercase hover:border-zinc-400 transition-colors disabled:opacity-50">
           Batal
         </button>
       </div>
