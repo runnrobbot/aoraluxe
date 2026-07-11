@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { CATEGORIES } from '../constants/categories';
 
 export const categorySchema = z.enum(['Sale', 'Semi Premium', 'Semi Original', 'Superclone', 'Unbranded']);
 export type CategoryInput = z.infer<typeof categorySchema>;
@@ -20,12 +19,3 @@ export const productInputSchema = z.object({
 });
 
 export type ProductInput = z.infer<typeof productInputSchema>;
-
-export const productQuerySchema = z.object({
-  category: z.enum(CATEGORIES as unknown as [string, ...string[]]).optional(),
-  search: z.string().optional(),
-  sortBy: z.enum(['newest', 'oldest', 'name_asc', 'name_desc', 'price_asc', 'price_desc']).optional(),
-});
-
-export const validateProduct = (data: unknown) => productInputSchema.safeParse(data);
-export const validateCategory = (cat: string) => categorySchema.safeParse(cat);

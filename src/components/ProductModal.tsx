@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getOptimizedUrl } from '../utils/cloudinary';
 import { useCart } from '../context/CartContext';
+import { buildWaLink } from '../constants/whatsapp';
 import type { Product } from '../types/product';
 
 interface ProductModalProps {
@@ -180,7 +181,7 @@ const ProductModal = ({ product, onClose }: ProductModalProps) => {
                 {stock === 0 ? 'Stok Habis' : 'Tambah ke Keranjang'}
               </motion.button>
               <motion.a
-                href={`https://api.whatsapp.com/send/?phone=6281214857082&text=${encodeURIComponent(waText)}&type=phone_number&app_absent=0`}
+                href={buildWaLink(waText)}
                 target="_blank" rel="noopener noreferrer"
                 whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
                 className="mt-2 w-full py-3 border border-zinc-200 text-zinc-600 text-[0.65rem] tracking-[0.3em] uppercase hover:border-zinc-900 hover:text-zinc-900 transition-all duration-300 flex items-center justify-center gap-2">

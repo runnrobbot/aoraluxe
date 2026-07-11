@@ -9,13 +9,10 @@ import {
   deleteDoc,
   doc,
   serverTimestamp,
-  FirestoreError,
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import type { Product } from '../types/product';
 import type { ProductInput } from '../schemas/product';
-
-const COLLECTION = 'products';
 
 interface UseProductsReturn {
   products: Product[];
@@ -32,7 +29,7 @@ export const useProducts = (): UseProductsReturn => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const q = query(collection(db, COLLECTION), orderBy('createdAt', 'desc'));
+    const q = query(collection(db, 'products'), orderBy('createdAt', 'desc'));
 
     const unsubscribe = onSnapshot(
       q,
@@ -41,7 +38,7 @@ export const useProducts = (): UseProductsReturn => {
         setProducts(docs);
         setLoading(false);
       },
-      (err: FirestoreError) => {
+      (err) => {
         console.error('Firestore error:', err);
         setError(err.message);
         setLoading(false);
@@ -52,7 +49,7 @@ export const useProducts = (): UseProductsReturn => {
   }, []);
 
   const addProduct = async (data: ProductInput): Promise<string> => {
-    const docRef = await addDoc(collection(db, COLLECTION), {
+    const docRef = await addDoc(collection(db, 'products'), {
       ...data,
       createdAt: serverTimestamp(),
     });
@@ -60,14 +57,14 @@ export const useProducts = (): UseProductsReturn => {
   };
 
   const updateProduct = async (id: string, data: Partial<ProductInput>): Promise<void> => {
-    await updateDoc(doc(db, COLLECTION, id), {
+    await updateDoc(doc(db, 'products', id), {
       ...data,
       updatedAt: serverTimestamp(),
     });
   };
 
   const deleteProduct = async (id: string): Promise<void> => {
-    await deleteDoc(doc(db, COLLECTION, id));
+    await deleteDoc(doc(db, 'products', id));
   };
 
   return { products, loading, error, addProduct, updateProduct, deleteProduct };

@@ -15,7 +15,6 @@ interface CartContextValue {
   totalPrice: number;
   drawerOpen: boolean;
   setDrawerOpen: (open: boolean) => void;
-  buildWhatsAppMessage: () => string;
 }
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -51,23 +50,6 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const totalItems = useMemo(() => items.reduce((sum, i) => sum + i.qty, 0), [items]);
   const totalPrice = useMemo(() => items.reduce((sum, i) => sum + (i.price ?? 0) * i.qty, 0), [items]);
 
-  const buildWhatsAppMessage = useCallback(() => {
-    const lines = items.map(
-      (i) =>
-        `• ${i.name} (${i.category || 'Produk'}) — ${i.qty}x @ Rp ${i.price?.toLocaleString('id-ID')} = Rp ${(i.price * i.qty).toLocaleString('id-ID')}`
-    );
-    const text = [
-      'Halo AORA LUXE! Saya ingin memesan:',
-      '',
-      ...lines,
-      '',
-      `Total: Rp ${totalPrice.toLocaleString('id-ID')}`,
-      '',
-      'Mohon konfirmasinya, terima kasih',
-    ].join('\n');
-    return `https://api.whatsapp.com/send/?phone=6281214857082&text=${encodeURIComponent(text)}&type=phone_number&app_absent=0`;
-  }, [items, totalPrice]);
-
   return (
     <CartContext.Provider
       value={{
@@ -80,7 +62,6 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
         totalPrice,
         drawerOpen,
         setDrawerOpen,
-        buildWhatsAppMessage,
       }}
     >
       {children}

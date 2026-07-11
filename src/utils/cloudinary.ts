@@ -3,11 +3,6 @@ export interface CloudinaryResult {
   publicId: string;
 }
 
-export interface OptimizedUrlOptions {
-  width?: number;
-  quality?: string;
-}
-
 const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
 const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
@@ -31,10 +26,7 @@ export const uploadImage = async (file: File): Promise<CloudinaryResult> => {
   return { url: data.secure_url, publicId: data.public_id };
 };
 
-export const getOptimizedUrl = (
-  publicId: string,
-  { width = 600, quality = 'auto' }: OptimizedUrlOptions = {}
-): string => {
+export const getOptimizedUrl = (publicId: string, { width = 600 }: { width?: number } = {}): string => {
   if (!publicId) return '';
-  return `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/w_${width},q_${quality},f_auto,c_fill/${publicId}`;
+  return `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/w_${width},q_auto,f_auto,c_fill/${publicId}`;
 };

@@ -2,30 +2,36 @@ import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../context/CartContext';
 import { getOptimizedUrl } from '../utils/cloudinary';
+import { buildWaLink } from '../constants/whatsapp';
 
 const CartDrawer = () => {
   const {
     items, removeItem, updateQty, clearCart,
-    totalItems, totalPrice, drawerOpen, setDrawerOpen, buildWhatsAppMessage,
+    totalItems, totalPrice, drawerOpen, setDrawerOpen,
   } = useCart();
 
   useEffect(() => {
     if (drawerOpen) {
       document.body.style.overflow = 'hidden';
-      document.body.style.touchAction = 'none';
     } else {
       document.body.style.overflow = '';
-      document.body.style.touchAction = '';
     }
-    return () => {
-      document.body.style.overflow = '';
-      document.body.style.touchAction = '';
-    };
+    return () => { document.body.style.overflow = ''; };
   }, [drawerOpen]);
 
   const handleCheckout = () => {
     if (items.length === 0) return;
-    window.open(buildWhatsAppMessage(), '_blank');
+    const lines = items.map(
+      (i) =>
+        `• ${i.name} (${i.category || 'Produk'}) — ${i.qty}x @ Rp ${i.price?.toLocaleString('id-ID')} = Rp ${(i.price * i.qty).toLocaleString('id-ID')}`
+    );
+    const text = [
+      'Halo AORA LUXE! Saya ingin memesan:',
+      '', ...lines, '',
+      `Total: Rp ${totalPrice.toLocaleString('id-ID')}`, '',
+      'Mohon konfirmasinya, terima kasih',
+    ].join('\n');
+    window.open(buildWaLink(text), '_blank');
   };
 
   const closeDrawer = (e?: React.TouchEvent | React.MouseEvent) => {

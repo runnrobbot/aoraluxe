@@ -1,7 +1,3 @@
-import type { Category, CategoryWithAll } from '../constants/categories';
-
-export type { Category, CategoryWithAll };
-
 export interface ProductImage {
   url: string;
   publicId: string;
@@ -10,7 +6,7 @@ export interface ProductImage {
 export interface Product {
   id: string;
   name: string;
-  category: Category;
+  category: string;
   price: number;
   stock: number;
   description: string;
