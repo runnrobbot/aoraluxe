@@ -94,7 +94,7 @@ const HeroSection = ({ onExplore }: HeroSectionProps) => (
       </div>
 
       <motion.p variants={fadeUp} className="text-zinc-400 text-[0.7rem] md:text-xs tracking-[0.4em] uppercase mb-10 font-light max-w-xs mx-auto leading-loose">
-        Kemewahan abadi, keanggunan tak tertandingi
+        People will stare. Make it worth their while.
       </motion.p>
 
       <motion.div variants={fadeUp}>
